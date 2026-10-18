@@ -7,33 +7,29 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 export function PromoBannerWide() {
   return (
-    <section className="py-12 sm:py-16 bg-white border-b border-slate-100 overflow-hidden">
+    <section className="py-12 sm:py-16 bg-[#F5EFE6] border-b border-[#E0D9CD] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl bg-radial from-orange-500 via-orange-600 to-amber-700 text-white p-8 sm:p-12 lg:p-14 overflow-hidden shadow-2xl">
-          {/* Subtle background graphics */}
-          <div className="absolute -top-20 -left-20 w-80 h-80 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-black/15 rounded-full blur-2xl pointer-events-none" />
-
+        <div className="relative rounded-3xl bg-[#23201C] text-[#F5EFE6] p-8 sm:p-12 lg:p-14 overflow-hidden shadow-xl border border-[#38332E]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
             {/* Left Content */}
             <div className="lg:col-span-7 space-y-4 text-center lg:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-white text-xs font-black uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#38332E] text-[#EAE4D9] border border-[#48423A] text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-[#EAE4D9]" />
                 <span>LIMITED TIME MEGA SALE</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-[#F5EFE6]">
                 Upgrade Today
               </h2>
 
-              <p className="text-base sm:text-lg text-orange-50 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
+              <p className="text-base sm:text-lg text-[#C8BFB4] max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
                 Get up to 40% OFF on selected smartphones &amp; accessories. Plus get flat ₹3,000 instant trade-in exchange bonus!
               </p>
 
               <div className="pt-2">
                 <Link
                   href="/shop?deal=true"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-bold text-sm sm:text-base transition-all duration-200 shadow-xl hover:-translate-y-0.5 group"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#EAE4D9] hover:bg-white text-[#23201C] font-bold text-sm sm:text-base transition-all duration-200 shadow-md hover:-translate-y-0.5 group"
                 >
                   <span>SHOP DEALS</span>
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -48,7 +44,7 @@ export function PromoBannerWide() {
                   src="/images/deal-phone.jpg"
                   alt="Flagship Smartphone Deals"
                   fill
-                  className="object-contain drop-shadow-2xl"
+                  className="object-contain drop-shadow-xl"
                 />
               </div>
             </div>

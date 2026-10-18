@@ -28,16 +28,16 @@ const WHY_A1_CARDS = [
 
 export function WhyChooseUs() {
   return (
-    <section className="py-14 sm:py-18 bg-white border-b border-slate-100">
+    <section className="py-14 sm:py-18 bg-[#F5EFE6] border-b border-[#E0D9CD]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-          <span className="text-xs font-bold uppercase tracking-wider text-orange-600 block mb-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#564F46] block mb-1">
             Our Commitment
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#23201C] tracking-tight">
             Why Choose A1?
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2">
+          <p className="text-xs sm:text-sm text-[#6E685F] mt-2">
             Gorakhpur&apos;s most trusted mobile store for brand new tech and instant buyback.
           </p>
         </div>
@@ -48,16 +48,16 @@ export function WhyChooseUs() {
             return (
               <div
                 key={index}
-                className="p-6 rounded-2xl bg-slate-50/70 border border-slate-200 hover:border-orange-400 hover:bg-white hover:shadow-lg hover:shadow-orange-500/5 transition-all duration-300 flex flex-col group"
+                className="p-6 rounded-2xl bg-[#EAE4D9]/80 border border-[#E0D9CD] hover:border-[#23201C] hover:bg-[#EAE4D9] hover:shadow-md transition-all duration-300 flex flex-col group"
               >
-                <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 text-orange-500 flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                <div className="w-12 h-12 rounded-xl bg-[#F5EFE6] border border-[#E0D9CD] text-[#23201C] flex items-center justify-center mb-4 group-hover:bg-[#23201C] group-hover:text-[#F5EFE6] transition-all">
                   <Icon className="w-6 h-6" />
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 mb-1.5 group-hover:text-orange-600 transition-colors">
+                <h3 className="text-base font-bold text-[#23201C] mb-1.5 group-hover:text-[#564F46] transition-colors">
                   {card.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#6E685F] leading-relaxed">
                   {card.desc}
                 </p>
               </div>

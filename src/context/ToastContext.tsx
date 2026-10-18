@@ -38,27 +38,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-xl shadow-xl border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 ${
+            className={`pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-2xl shadow-xl border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 ${
               toast.type === 'error'
-                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                ? 'bg-[#3A2222] border-[#5C3434] text-[#FCE8E8]'
                 : toast.type === 'info'
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-900'
-                : 'bg-white border-slate-200 text-slate-900'
+                ? 'bg-[#564F46] border-[#48423A] text-[#F5EFE6]'
+                : 'bg-[#23201C] border-[#38332E] text-[#F5EFE6]'
             }`}
           >
             <div className="flex items-center gap-3">
               {toast.type === 'error' ? (
-                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                <AlertCircle className="w-5 h-5 text-[#F87171] shrink-0" />
               ) : toast.type === 'info' ? (
-                <Info className="w-5 h-5 text-indigo-600 shrink-0" />
+                <Info className="w-5 h-5 text-[#E0D9CD] shrink-0" />
               ) : (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-[#4ADE80] shrink-0" />
               )}
               <span className="text-sm font-medium">{toast.message}</span>
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-slate-400 hover:text-slate-600 p-1"
+              className="text-[#8E867C] hover:text-[#F5EFE6] p-1 transition-colors"
               aria-label="Close toast"
             >
               <X className="w-4 h-4" />

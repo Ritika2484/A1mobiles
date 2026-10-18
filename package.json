@@ -1,19 +1,33 @@
 {
-  "name": "temp-app",
+  "name": "a1-mobile-shop",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "npx tsx scripts/seed-mongo.ts",
+    "catalog:sync": "npx tsx scripts/import-catalog.ts",
+    "db:migrate": "npx tsx scripts/migrate-pg-to-mongo.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "@prisma/client": "6.19.3",
+    "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
+    "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
+    "cloudinary": "^2.11.0",
     "framer-motion": "^14.0.0",
+    "iron-session": "^9.0.1",
     "lucide-react": "^1.52.0",
+    "mongoose": "^9.11.2",
     "next": "16.3.8",
+    "prisma": "6.19.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

@@ -6,6 +6,8 @@ export function formatINR(amount: number): string {
   }).format(amount);
 }
 
+export const formatPrice = formatINR;
+
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
   return classes.filter(Boolean).join(' ');
 }

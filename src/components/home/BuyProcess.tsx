@@ -32,17 +32,17 @@ export function BuyProcess() {
   ];
 
   return (
-    <section className="py-14 sm:py-18 bg-slate-900 text-white border-b border-slate-800">
+    <section className="py-14 sm:py-18 bg-[#564F46] text-[#F5EFE6] border-b border-[#48423A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-14">
-          <span className="text-xs font-bold uppercase tracking-wider text-orange-400 block mb-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#EAE4D9] block mb-1">
             Shopping Guide
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#F5EFE6]">
             How to Buy From A1
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2">
+          <p className="text-xs sm:text-sm text-[#D5CFCE] mt-2">
             A seamless, transparent retail experience from click to unboxing.
           </p>
         </div>
@@ -54,30 +54,30 @@ export function BuyProcess() {
             return (
               <div
                 key={idx}
-                className="bg-slate-950/80 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between hover:border-orange-500/60 hover:-translate-y-1 transition-all duration-300 relative group"
+                className="bg-[#48423A]/85 rounded-2xl border border-[#645C52] p-6 flex flex-col justify-between hover:border-[#EAE4D9] hover:-translate-y-1 transition-all duration-300 relative group shadow-sm"
               >
                 <div>
                   {/* Top Step Number & Icon */}
                   <div className="flex items-center justify-between mb-5">
-                    <span className="text-2xl font-black text-slate-600 group-hover:text-orange-400 transition-colors">
+                    <span className="text-2xl font-black text-[#A89F93] group-hover:text-[#F5EFE6] transition-colors">
                       {step.num}
                     </span>
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-[#38332B] flex items-center justify-center text-[#EAE4D9] group-hover:bg-[#23201C] group-hover:text-[#F5EFE6] transition-all">
                       <Icon className="w-5 h-5" />
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
+                  <h3 className="text-base font-bold text-[#F5EFE6] mb-2 group-hover:text-[#EAE4D9] transition-colors">
                     {step.title}
                   </h3>
 
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-[#C8BFB4] leading-relaxed">
                     {step.desc}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                <div className="mt-5 pt-3 border-t border-[#645C52] flex items-center gap-1.5 text-[11px] font-semibold text-[#A89F93]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#EAE4D9]" />
                   <span>Step {idx + 1} of 4</span>
                 </div>
               </div>

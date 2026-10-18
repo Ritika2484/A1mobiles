@@ -16,14 +16,14 @@ export function Testimonials() {
   };
 
   return (
-    <section className="py-14 sm:py-18 bg-slate-50/70 border-b border-slate-100">
+    <section className="py-14 sm:py-18 bg-[#F5EFE6] border-b border-[#E0D9CD]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10 text-center sm:text-left">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#23201C] tracking-tight">
               What Our Customers Say
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-[#6E685F] mt-1">
               Read real experiences from tech buyers and device sellers across Gorakhpur and India.
             </p>
           </div>
@@ -32,17 +32,17 @@ export function Testimonials() {
           <div className="flex items-center justify-center sm:justify-end gap-2 md:hidden">
             <button
               onClick={prevSlide}
-              className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:text-orange-600 transition-colors shadow-2xs"
+              className="p-2 rounded-xl border border-[#E0D9CD] bg-[#EAE4D9] text-[#23201C] hover:bg-[#DFD8CC] transition-colors shadow-2xs"
               aria-label="Previous review"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-slate-500">
+            <span className="text-xs font-bold text-[#6E685F]">
               {currentIndex + 1} / {testimonials.length}
             </span>
             <button
               onClick={nextSlide}
-              className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:text-orange-600 transition-colors shadow-2xs"
+              className="p-2 rounded-xl border border-[#E0D9CD] bg-[#EAE4D9] text-[#23201C] hover:bg-[#DFD8CC] transition-colors shadow-2xs"
               aria-label="Next review"
             >
               <ChevronRight className="w-4 h-4" />
@@ -55,7 +55,7 @@ export function Testimonials() {
           {testimonials.map((test, index) => (
             <div
               key={test.id}
-              className={`p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300 flex flex-col justify-between ${
+              className={`p-6 sm:p-7 rounded-2xl bg-[#EAE4D9]/80 border border-[#E0D9CD] hover:border-[#23201C] hover:shadow-lg transition-all duration-300 flex flex-col justify-between ${
                 index === currentIndex ? 'flex' : 'hidden md:flex'
               }`}
             >
@@ -64,32 +64,32 @@ export function Testimonials() {
                 <div className="flex items-center justify-between mb-3.5">
                   <div className="flex items-center gap-1">
                     {[...Array(test.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-orange-400 text-orange-400" />
+                      <Star key={i} className="w-4 h-4 fill-[#564F46] text-[#564F46]" />
                     ))}
                   </div>
-                  <Quote className="w-5 h-5 text-orange-200" />
+                  <Quote className="w-5 h-5 text-[#564F46]/40" />
                 </div>
 
                 {/* Review Text */}
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic mb-6">
+                <p className="text-xs sm:text-sm text-[#23201C] leading-relaxed italic mb-6">
                   &ldquo;{test.comment}&rdquo;
                 </p>
               </div>
 
               {/* Customer Footer */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-4 border-t border-[#E0D9CD] flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">
+                  <h4 className="font-bold text-[#23201C] text-sm">
                     {test.author}
                   </h4>
                   {test.location && (
-                    <span className="text-[11px] text-slate-400 block">
+                    <span className="text-[11px] text-[#6E685F] block">
                       {test.location}
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[#2E6B47] bg-[#E6EFE9] px-2 py-0.5 rounded-full border border-[#C5DDCF]">
                   <CheckCircle2 className="w-3 h-3" />
                   <span>Verified Purchase</span>
                 </div>

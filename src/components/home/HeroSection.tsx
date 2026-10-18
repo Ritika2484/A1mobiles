@@ -1,165 +1,308 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { ArrowRight, ShieldCheck, Zap, Star, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Store, ArrowRight } from 'lucide-react';
 import { formatINR } from '@/lib/utils';
 
+export interface GalleryDevice {
+  id: string;
+  category: 'current' | 'new';
+  brand: string;
+  name: string;
+  specs: string;
+  price: number;
+  originalPrice: number;
+  image: string;
+  slug: string;
+}
+
 export function HeroSection() {
+  const [galleryItems, setGalleryItems] = useState<GalleryDevice[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch real inventory strictly from MongoDB & Cloudinary
+  useEffect(() => {
+    async function loadHeroProducts() {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/products');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          const items: GalleryDevice[] = data.products.map((p: any, idx: number) => ({
+            id: p.id,
+            category: idx % 2 === 0 ? 'current' : 'new',
+            brand: p.brand || 'A1 Exclusive',
+            name: p.name,
+            specs: p.description ? p.description.split('\n')[0].slice(0, 38) : 'Verified Gorakhpur Inventory',
+            price: p.price,
+            originalPrice: p.originalPrice || p.price,
+            image: p.imageUrl || '/images/hero-phone.jpg',
+            slug: p.slug,
+          }));
+          setGalleryItems(items);
+        }
+      } catch (err) {
+        console.error('Failed to load hero devices from DB:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadHeroProducts();
+  }, []);
+
+  const totalItems = galleryItems.length;
+  const activeDevice = totalItems > 0 ? galleryItems[activeIndex % totalItems] : null;
+  const activeCategory = activeDevice ? activeDevice.category : 'current';
+
+  // Auto-transition every 2000ms (2 seconds)
+  const nextSlide = useCallback(() => {
+    if (totalItems <= 1) return;
+    setActiveIndex((prev) => (prev + 1) % totalItems);
+  }, [totalItems]);
+
+  const prevSlide = useCallback(() => {
+    if (totalItems <= 1) return;
+    setActiveIndex((prev) => (prev - 1 + totalItems) % totalItems);
+  }, [totalItems]);
+
+  useEffect(() => {
+    if (isPaused || totalItems <= 1) return;
+
+    timerRef.current = setInterval(() => {
+      nextSlide();
+    }, 2000); // 2 second transition
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [nextSlide, isPaused, activeIndex, totalItems]);
+
+  // Tab switcher logic
+  const handleTabClick = (category: 'new' | 'current') => {
+    const targetIdx = galleryItems.findIndex((item) => item.category === category);
+    if (targetIdx !== -1) {
+      setActiveIndex(targetIdx);
+    }
+  };
+
   return (
-    <section className="relative overflow-hidden bg-white pt-8 pb-14 lg:py-20 border-b border-slate-100">
-      {/* Subtle warm ambient background glow */}
-      <div className="absolute top-10 right-10 w-96 h-96 bg-orange-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-10 left-10 w-96 h-96 bg-slate-100/60 rounded-full blur-3xl pointer-events-none -z-10" />
-
+    <section className="bg-[#F5EFE6] text-[#23201C] pt-10 sm:pt-14 pb-14 sm:pb-20 border-b border-[#E8E1D5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-          {/* Left Column: Hero Text & Dual CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="lg:col-span-6 space-y-6 text-center lg:text-left"
-          >
-            {/* Small Orange Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-600 text-xs sm:text-sm font-bold tracking-wider uppercase">
-              <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-              <span>NEW ARRIVALS • BEST PRICES</span>
-            </div>
-
-            {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.12]">
-              Upgrade Your <br className="hidden sm:inline" />
-              <span className="text-orange-500">
-                Mobile Experience
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          
+          {/* Left Column: Clean Editorial Typography & CTAs */}
+          <div className="lg:col-span-6 space-y-6 text-left">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.75rem] font-medium tracking-tight text-[#23201C] leading-[1.12]">
+              Upgrade your <br />
+              mobile experience
             </h1>
 
-            {/* Description */}
-            <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-              Discover the latest smartphones, accessories and smart devices from trusted brands at the best prices.
+            <p className="text-base sm:text-lg text-[#6E685F] max-w-lg leading-relaxed font-normal">
+              Genuine flagship smartphones, verified pre-owned devices, and instant cash exchange at your doorstep in Gorakhpur.
             </p>
 
-            {/* Dual CTAs: SHOP SMARTPHONES & SELL YOUR OLD PHONE */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+            {/* Dual CTAs */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href="/shop?category=smartphones"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm sm:text-base transition-all duration-200 shadow-md shadow-orange-500/25 hover:-translate-y-0.5 group"
+                className="px-6 py-3.5 rounded-2xl bg-[#23201C] hover:bg-[#151311] text-white font-medium text-sm sm:text-base transition-colors shadow-xs"
               >
-                <span>SHOP SMARTPHONES</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                Shop smartphones
               </Link>
 
               <Link
                 href="/sell-device"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base border border-slate-900 transition-all duration-200 hover:-translate-y-0.5 shadow-sm"
+                className="px-6 py-3.5 rounded-2xl bg-transparent hover:bg-black/5 text-[#23201C] border border-[#D5CFCE] font-medium text-sm sm:text-base transition-colors"
               >
-                <span>SELL YOUR OLD PHONE</span>
+                Sell your old phone
               </Link>
             </div>
 
-            {/* Trust Highlights under Hero */}
-            <div className="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-500 font-medium">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>100% Genuine Devices</span>
-              </div>
-              <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300" />
-              <div className="flex items-center gap-1.5">
-                <Zap className="w-4 h-4 text-orange-500" />
-                <span>Instant Doorstep Buyback</span>
-              </div>
-              <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300" />
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-slate-800">📍 Gorakhpur Store</span>
-              </div>
-            </div>
-          </motion.div>
+            {/* Quiet trust credentials */}
+            <p className="text-xs sm:text-sm text-[#78726A] pt-3 leading-relaxed">
+              100% genuine devices, instant doorstep buyback, Gorakhpur store
+            </p>
+          </div>
 
-          {/* Right Column: Featured Smartphone Mockup + Floating Product Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: 'easeOut' }}
-            className="lg:col-span-6 relative flex items-center justify-center"
+          {/* Right Column: Fixed Minimalist Luxury Gallery Card */}
+          <div
+            className="lg:col-span-6 relative flex justify-center lg:justify-end"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
           >
-            {/* Visual Container */}
-            <div className="relative w-full max-w-md lg:max-w-lg aspect-square flex items-center justify-center">
-              {/* Soft background shape */}
-              <div className="absolute inset-4 bg-radial from-orange-100/50 via-slate-100/40 to-transparent rounded-full -z-10" />
-
-              {/* Main Smartphone Hero Visual with subtle float animation */}
-              <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                className="relative w-4/5 h-4/5"
-              >
-                <Image
-                  src="/images/hero-phone.jpg"
-                  alt="iPhone 17 Pro Max Titanium Showcase"
-                  fill
-                  priority
-                  className="object-contain drop-shadow-2xl"
-                />
-              </motion.div>
-
-              {/* Floating Top Rating Badge */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="absolute top-2 right-2 sm:top-6 sm:right-6 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-lg flex items-center gap-3 z-10"
-              >
-                <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
-                  <Star className="w-5 h-5 fill-orange-400 text-orange-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                    <span>4.9 / 5 Rating</span>
+            {activeDevice ? (
+              <div className="relative w-full max-w-[500px] h-[460px] sm:h-[500px] rounded-[2rem] bg-[#EAE4D9] border border-[#E0D9CD] shadow-sm overflow-hidden flex flex-col justify-between">
+                
+                {/* Card Header: Tabs Capsule + Arrow Controls */}
+                <div className="p-4 sm:p-5 flex items-center justify-between z-20">
+                  {/* Mode Tabs */}
+                  <div className="bg-[#F4F0E8] p-1 rounded-full flex items-center shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleTabClick('new')}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                        activeCategory === 'new'
+                          ? 'bg-[#23201C] text-white shadow-xs'
+                          : 'text-[#6E685F] hover:text-[#23201C]'
+                      }`}
+                    >
+                      New arrivals
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTabClick('current')}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                        activeCategory === 'current'
+                          ? 'bg-[#23201C] text-white shadow-xs'
+                          : 'text-[#6E685F] hover:text-[#23201C]'
+                      }`}
+                    >
+                      Current arrivals
+                    </button>
                   </div>
-                  <span className="text-[11px] text-slate-500">2,840+ Happy Customers</span>
+
+                  {/* Arrow Controls */}
+                  {totalItems > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={prevSlide}
+                        className="w-8 h-8 rounded-full bg-[#F4F0E8] hover:bg-white text-[#23201C] flex items-center justify-center transition-colors shadow-xs"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={nextSlide}
+                        className="w-8 h-8 rounded-full bg-[#F4F0E8] hover:bg-white text-[#23201C] flex items-center justify-center transition-colors shadow-xs"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </motion.div>
 
-              {/* Floating Product Card as explicitly specified */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="absolute -bottom-3 left-2 sm:bottom-2 sm:left-4 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xl max-w-[260px] sm:max-w-[280px] z-20"
-              >
-                <span className="inline-block px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider mb-1.5">
-                  Featured
-                </span>
+                {/* Main Product Showcase Image */}
+                <Link
+                  href={`/products/${activeDevice.slug}`}
+                  className="relative flex-1 w-full flex items-center justify-center px-8 pt-2 pb-6 group"
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeDevice.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.02 }}
+                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                      className="relative w-full h-full flex items-center justify-center"
+                    >
+                      <Image
+                        src={activeDevice.image}
+                        alt={activeDevice.name}
+                        fill
+                        priority
+                        className="object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-[1.02]"
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                </Link>
 
-                <h3 className="font-extrabold text-slate-900 text-base leading-tight">
-                  iPhone 17 Pro Max
-                </h3>
+                {/* Bottom Details Banner (Solid Slate-Taupe #564F46) */}
+                <div className="bg-[#564F46] p-4 sm:p-5 text-white z-20">
+                  <div className="flex items-end justify-between gap-4">
+                    {/* Device Info */}
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-white/70 font-medium tracking-wide">
+                        {activeDevice.brand}
+                      </p>
+                      <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight truncate mt-0.5">
+                        {activeDevice.name}
+                      </h3>
+                      <p className="text-xs text-white/70 font-normal mt-0.5 truncate">
+                        {activeDevice.specs}
+                      </p>
+                    </div>
 
-                <p className="text-xs text-slate-500 mt-0.5">
-                  256GB • Titanium
-                </p>
+                    {/* Pricing Info */}
+                    <div className="text-right shrink-0">
+                      {activeDevice.originalPrice > activeDevice.price && (
+                        <p className="text-xs text-white/60 line-through">
+                          {formatINR(activeDevice.originalPrice)}
+                        </p>
+                      )}
+                      <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                        {formatINR(activeDevice.price)}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
-                  <span className="text-base font-extrabold text-orange-500">
-                    {formatINR(139900)}
+                  {/* Dash / Pill Progress Indicators */}
+                  {totalItems > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 pt-3">
+                      {galleryItems.map((item, idx) => {
+                        const isActive = idx === activeIndex;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setActiveIndex(idx)}
+                            className={`h-1 rounded-full transition-all duration-300 ${
+                              isActive
+                                ? 'w-7 bg-white'
+                                : 'w-3 bg-white/40 hover:bg-white/60'
+                            }`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            ) : (
+              <div className="relative w-full max-w-[500px] h-[460px] sm:h-[500px] rounded-[2rem] bg-[#EAE4D9] border border-[#E0D9CD] p-8 flex flex-col justify-between text-left">
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-[#23201C] text-[#F5EFE6] flex items-center justify-center mb-6">
+                    <Store className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#564F46] block mb-1">
+                    Gorakhpur Flagship Store
                   </span>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-[#23201C] leading-snug">
+                    A1 Mobile Shop Experience
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#6E685F] mt-2 leading-relaxed">
+                    Explore our physical inventory at Basharatpur, Gorakhpur. 100% genuine sealed devices with brand warranty.
+                  </p>
+                </div>
 
+                <div className="pt-6 border-t border-[#DED7CA]">
                   <Link
-                    href="/products/iphone-17-pro-max"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-orange-500 transition-colors uppercase tracking-tight"
+                    href="/shop"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#23201C] text-[#F5EFE6] text-xs font-bold hover:bg-[#151311] transition-all"
                   >
-                    <span>VIEW PRODUCT</span>
-                    <ArrowRight className="w-3 h-3 text-orange-500" />
+                    <span>Browse Collection</span>
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
-              </motion.div>
-            </div>
-          </motion.div>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </section>
   );
 }
+
+export default HeroSection;

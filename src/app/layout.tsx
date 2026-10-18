@@ -2,9 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
-import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -41,12 +39,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
-      <body className="min-h-screen flex flex-col bg-white text-slate-900 font-sans selection:bg-orange-500 selection:text-white">
+      <body className="min-h-screen flex flex-col bg-[#F5EFE6] text-[#23201C] font-sans selection:bg-[#23201C] selection:text-white">
         <AppProviders>
-          <AnnouncementBar />
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <PublicLayout>{children}</PublicLayout>
         </AppProviders>
       </body>
     </html>

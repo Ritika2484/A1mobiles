@@ -1,119 +1,220 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import {
   CheckCircle2,
   ShieldCheck,
-  CreditCard,
   Truck,
   ArrowRight,
-  ArrowLeft,
-  Smartphone,
-  Check,
-  Lock,
-  ShoppingBag
+  ShoppingBag,
+  MessageCircle,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { formatINR } from '@/lib/utils';
 import { useToast } from '@/context/ToastContext';
 
-type CheckoutStep = 1 | 2 | 3 | 4;
-
 export default function CheckoutPage() {
-  const router = useRouter();
   const { cart, subtotal, discount, shipping, total, clearCart } = useCart();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>(1);
-
-  // Form State
   const [formData, setFormData] = useState({
-    // Step 1: Info
-    email: 'customer@example.com',
-    phone: '9876543210',
-    fullName: 'Rahul Sharma',
-    // Step 2: Shipping
-    address: 'Near Main Market, Basharatpur',
-    landmark: 'Opposite Central Park',
+    fullName: '',
+    phone: '',
+    email: '',
+    address: '',
+    landmark: '',
     city: 'Gorakhpur',
     state: 'Uttar Pradesh',
     pincode: '273004',
-    shippingMethod: 'standard', // 'standard' | 'express'
-    // Step 3: Payment
-    paymentMethod: 'upi', // 'upi' | 'card' | 'cod'
-    upiId: 'rahul@oksbi',
-    cardNumber: '4532 •••• •••• 8821',
-    cardExpiry: '12/28',
-    cardCvv: '392',
-    cardName: 'RAHUL SHARMA',
+    customerNote: '',
   });
 
-  const [orderNumber, setOrderNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState<{
+    orderNumber: string;
+    whatsappUrl: string;
+    fullName: string;
+    phone: string;
+    address: string;
+    city: string;
+    pincode: string;
+    total: number;
+  } | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Pre-fill user data if logged in
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.name || '',
+        email: prev.email || user.email || '',
+        phone: prev.phone || user.phone || '',
+      }));
+    }
+  }, [user]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNextStep = (e: React.FormEvent) => {
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentStep === 1) {
-      if (!formData.fullName || !formData.email || !formData.phone) {
-        showToast('Please fill in all contact information', 'error');
-        return;
-      }
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (!formData.address || !formData.city || !formData.pincode) {
-        showToast('Please complete shipping address', 'error');
-        return;
-      }
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
-      // Place Order
-      const newOrderNum = `A1-${Math.floor(100000 + Math.random() * 900000)}`;
-      setOrderNumber(newOrderNum);
-      setCurrentStep(4);
 
-      // Trigger Confetti!
-      try {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
-      } catch {
-        // ignore
-      }
-
-      showToast(`Order #${newOrderNum} placed successfully!`, 'success');
-      clearCart();
+    // Validation
+    if (!formData.fullName.trim()) {
+      showToast('Please enter your full name', 'error');
+      return;
     }
+    if (!formData.phone.trim() || formData.phone.trim().length < 10) {
+      showToast('Please enter a valid 10-digit mobile number', 'error');
+      return;
+    }
+    if (!formData.address.trim()) {
+      showToast('Please enter your delivery address', 'error');
+      return;
+    }
+    if (!formData.city.trim() || !formData.pincode.trim()) {
+      showToast('Please enter city and PIN code', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const newOrderNum = `A1-${Math.floor(100000 + Math.random() * 900000)}`;
+    const phone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918726942338';
+
+    // Format items list for WhatsApp
+    const itemsText = cart
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item.product.name}${
+            item.selectedStorage ? ` (${item.selectedStorage})` : ''
+          } x ${item.quantity} - ${formatINR(item.product.price * item.quantity)}`
+      )
+      .join('\n');
+
+    // Build formatted WhatsApp message
+    const messageLines = [
+      `🛒 *NEW ORDER - A1 MOBILE SHOP*`,
+      `----------------------------------------`,
+      `*Order ID:* ${newOrderNum}`,
+      ``,
+      `👤 *CUSTOMER DETAILS:*`,
+      `• Name: ${formData.fullName.trim()}`,
+      `• Phone: +91 ${formData.phone.trim()}`,
+      formData.email.trim() ? `• Email: ${formData.email.trim()}` : null,
+      ``,
+      `📍 *DELIVERY ADDRESS:*`,
+      `• Address: ${formData.address.trim()}`,
+      formData.landmark.trim() ? `• Landmark: ${formData.landmark.trim()}` : null,
+      `• City: ${formData.city.trim()}, ${formData.state.trim()}`,
+      `• PIN Code: ${formData.pincode.trim()}`,
+      ``,
+      `📦 *ORDERED ITEMS:*`,
+      itemsText,
+      ``,
+      `----------------------------------------`,
+      `💰 *Subtotal:* ${formatINR(subtotal)}`,
+      discount > 0 ? `🏷️ *Discount:* -${formatINR(discount)}` : null,
+      `🚚 *Delivery:* FREE (Gorakhpur Dispatch)`,
+      `💵 *TOTAL AMOUNT:* ${formatINR(total)}`,
+      `💳 *Payment Mode:* Cash on Delivery / UPI upon Confirmation`,
+      formData.customerNote.trim()
+        ? `\n📝 *Customer Note:* ${formData.customerNote.trim()}`
+        : null,
+      `----------------------------------------`,
+      `Please confirm my order and share estimated dispatch timing. Thank you!`,
+    ]
+      .filter((line) => line !== null)
+      .join('\n');
+
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(messageLines)}`;
+
+    // Optional: send enquiry to server in background
+    try {
+      if (cart.length > 0) {
+        await fetch('/api/enquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: cart[0].product.id,
+            quantity: cart[0].quantity,
+            customerNote: `Order #${newOrderNum} | ${formData.fullName} | ${formData.address}, ${formData.city}`,
+          }),
+        }).catch(() => {});
+      }
+    } catch {
+      // Ignore API background sync error
+    }
+
+    // Set confirmed state
+    setConfirmedOrder({
+      orderNumber: newOrderNum,
+      whatsappUrl,
+      fullName: formData.fullName.trim(),
+      phone: formData.phone.trim(),
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      pincode: formData.pincode.trim(),
+      total,
+    });
+    setOrderConfirmed(true);
+
+    // Trigger celebratory confetti
+    try {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+    } catch {
+      // ignore
+    }
+
+    showToast(`Order #${newOrderNum} created! Redirecting to WhatsApp...`, 'success');
+
+    // Clear cart
+    clearCart();
+
+    // Redirect to WhatsApp in a new tab or window
+    setTimeout(() => {
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      setIsSubmitting(false);
+    }, 400);
   };
 
-  const deliveryCharge = formData.shippingMethod === 'express' ? 149 : shipping;
-  const finalTotal = total + (formData.shippingMethod === 'express' ? 149 : 0);
-
-  if (cart.length === 0 && currentStep !== 4) {
+  // If cart is empty and not confirmed
+  if (cart.length === 0 && !orderConfirmed) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-md shadow-sm">
-          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-4">
+      <div className="min-h-screen bg-[#F5EFE6] flex items-center justify-center p-4">
+        <div className="bg-[#EAE4D9]/80 rounded-3xl border border-[#E0D9CD] p-8 sm:p-12 text-center max-w-md shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-[#F4F0E8] border border-[#DED7CA] flex items-center justify-center mx-auto text-[#6E685F] mb-4">
             <ShoppingBag className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Your Cart is Empty</h2>
-          <p className="text-sm text-slate-500 mt-2">
-            Please add some products to your cart before proceeding to checkout.
+          <h2 className="text-xl font-medium text-[#23201C]">Your Cart is Empty</h2>
+          <p className="text-sm text-[#6E685F] mt-2">
+            Add your favourite smartphones or accessories to proceed with your order.
           </p>
           <Link
             href="/shop"
-            className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-bold text-xs hover:bg-orange-600 shadow-md shadow-orange-500/20"
+            className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#23201C] text-[#F5EFE6] font-medium text-xs hover:bg-[#151311] transition-colors"
           >
-            <span>Return to Shop</span>
+            <span>Browse Products</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -121,631 +222,412 @@ export default function CheckoutPage() {
     );
   }
 
-  return (
-    <div className="bg-slate-50/60 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Step Indicator */}
-        <div className="mb-10 max-w-2xl mx-auto">
-          <div className="flex items-center justify-between relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 w-full -z-0" />
-            <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-orange-500 transition-all duration-500 -z-0"
-              style={{
-                width: `${((currentStep - 1) / 3) * 100}%`,
-              }}
-            />
+  // ORDER CONFIRMED VIEW (WhatsApp Redirect Success)
+  if (orderConfirmed && confirmedOrder) {
+    return (
+      <div className="bg-[#F5EFE6] min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto bg-[#EAE4D9]/90 rounded-3xl border border-[#E0D9CD] p-8 sm:p-12 text-center shadow-sm space-y-6">
+          <div className="w-16 h-16 rounded-full bg-[#E6EFE9] border border-[#C2DEC8] text-[#2E6B47] flex items-center justify-center mx-auto animate-in zoom-in-75">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
 
-            {[
-              { step: 1, label: '01 Information' },
-              { step: 2, label: '02 Delivery' },
-              { step: 3, label: '03 Payment' },
-              { step: 4, label: '04 Confirmation' },
-            ].map((s) => (
-              <div key={s.step} className="flex flex-col items-center relative z-10">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    currentStep > s.step
-                      ? 'bg-emerald-600 text-white ring-4 ring-emerald-100'
-                      : currentStep === s.step
-                      ? 'bg-orange-500 text-white ring-4 ring-orange-100 shadow-md'
-                      : 'bg-white border-2 border-slate-300 text-slate-400'
-                  }`}
-                >
-                  {currentStep > s.step ? <Check className="w-5 h-5" /> : s.step}
-                </div>
-                <span
-                  className={`text-[11px] sm:text-xs font-bold mt-2 whitespace-nowrap ${
-                    currentStep >= s.step ? 'text-slate-900' : 'text-slate-400'
-                  }`}
-                >
-                  {s.label}
-                </span>
-              </div>
-            ))}
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#2E6B47] block mb-1">
+              Order Registered Successfully
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-medium text-[#23201C] tracking-tight">
+              Order #{confirmedOrder.orderNumber}
+            </h1>
+            <p className="text-sm text-[#6E685F] mt-2">
+              Your order details have been prepared for WhatsApp dispatch. If WhatsApp did not open automatically, click the button below to complete your order confirmation.
+            </p>
+          </div>
+
+          {/* WhatsApp Direct Action Button */}
+          <div className="pt-2">
+            <a
+              href={confirmedOrder.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl bg-[#2E6B47] hover:bg-[#255739] text-[#F5EFE6] font-bold text-sm shadow-md transition-all active:scale-98"
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span>Open WhatsApp to Confirm Order</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+
+          {/* Order Details Summary Card */}
+          <div className="p-5 rounded-2xl bg-[#F4F0E8] border border-[#E0D9CD] text-left space-y-3 text-xs sm:text-sm">
+            <div className="flex justify-between pb-2 border-b border-[#E0D9CD]">
+              <span className="text-[#6E685F]">Order ID:</span>
+              <strong className="text-[#23201C] font-semibold font-mono">
+                {confirmedOrder.orderNumber}
+              </strong>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-[#E0D9CD]">
+              <span className="text-[#6E685F]">Customer:</span>
+              <span className="text-[#23201C] font-medium">
+                {confirmedOrder.fullName} (+91 {confirmedOrder.phone})
+              </span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-[#E0D9CD]">
+              <span className="text-[#6E685F]">Delivery To:</span>
+              <span className="text-[#23201C] font-medium text-right max-w-xs">
+                {confirmedOrder.address}, {confirmedOrder.city} - {confirmedOrder.pincode}
+              </span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-[#E0D9CD]">
+              <span className="text-[#6E685F]">Delivery Time:</span>
+              <span className="text-[#23201C] font-semibold">24 to 48 Hours (Gorakhpur)</span>
+            </div>
+            <div className="flex justify-between pt-1">
+              <span className="text-[#6E685F]">Total Payable:</span>
+              <strong className="text-[#2E6B47] font-bold text-base">
+                {formatINR(confirmedOrder.total)}
+              </strong>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/shop"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#23201C] hover:bg-[#151311] text-[#F5EFE6] font-medium text-xs transition-colors"
+            >
+              <span>Continue Shopping</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/"
+              className="w-full sm:w-auto inline-flex items-center justify-center py-3 px-6 rounded-full border border-[#DED7CA] bg-[#EAE4D9] text-[#23201C] font-medium text-xs hover:bg-[#DFD8CC] transition-colors"
+            >
+              Back to Home
+            </Link>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Step 4: Order Confirmation View */}
-        {currentStep === 4 ? (
-          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-14 text-center max-w-2xl mx-auto shadow-sm space-y-6">
-            <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto animate-in zoom-in-75">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
+  // SINGLE-PAGE CHECKOUT: BASIC INFO + DELIVERY INFO -> WHATSAPP
+  return (
+    <div className="bg-[#F5EFE6] min-h-screen py-8 sm:py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Breadcrumb */}
+        <div className="mb-6">
+          <nav className="text-xs text-[#6E685F] flex items-center gap-2 mb-2">
+            <Link href="/" className="hover:text-[#23201C]">Home</Link>
+            <span>/</span>
+            <Link href="/shop" className="hover:text-[#23201C]">Shop</Link>
+            <span>/</span>
+            <span className="text-[#23201C] font-medium">Checkout</span>
+          </nav>
+          <h1 className="text-2xl sm:text-3xl font-medium text-[#23201C] tracking-tight">
+            Order Checkout
+          </h1>
+          <p className="text-xs sm:text-sm text-[#6E685F] mt-1">
+            Fill in your contact and delivery details below to instantly place your order via WhatsApp.
+          </p>
+        </div>
 
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-                Order Placed Successfully
-              </span>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-                Thank You For Your Order!
-              </h1>
-              <p className="text-sm text-slate-600 mt-2">
-                We have received your order and are preparing it for shipment from our Gorakhpur hub. A confirmation invoice has been sent to <strong>{formData.email}</strong>.
-              </p>
-            </div>
-
-            {/* Order details card */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-3 text-xs sm:text-sm">
-              <div className="flex justify-between pb-2 border-b border-slate-200">
-                <span className="text-slate-500">Order Reference ID:</span>
-                <strong className="text-slate-900 font-bold font-mono">{orderNumber}</strong>
-              </div>
-              <div className="flex justify-between pb-2 border-b border-slate-200">
-                <span className="text-slate-500">Recipient Name:</span>
-                <span className="text-slate-900 font-semibold">{formData.fullName}</span>
-              </div>
-              <div className="flex justify-between pb-2 border-b border-slate-200">
-                <span className="text-slate-500">Delivery Address:</span>
-                <span className="text-slate-900 font-semibold text-right max-w-xs">
-                  {formData.address}, {formData.city}, {formData.pincode}
-                </span>
-              </div>
-              <div className="flex justify-between pb-2 border-b border-slate-200">
-                <span className="text-slate-500">Estimated Delivery:</span>
-                <span className="text-orange-600 font-bold">Within 24 to 48 Hours</span>
-              </div>
-              <div className="flex justify-between pt-1">
-                <span className="text-slate-500">Payment Status:</span>
-                <span className="text-emerald-700 font-bold uppercase">Paid via {formData.paymentMethod}</span>
-              </div>
-            </div>
-
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/shop"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20"
-              >
-                <span>Continue Shopping</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/"
-                className="w-full sm:w-auto inline-flex items-center justify-center py-3.5 px-6 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm hover:bg-slate-50"
-              >
-                Back to Homepage
-              </Link>
-            </div>
-          </div>
-        ) : (
-          /* Steps 1, 2, 3 Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Form Column */}
-            <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-              <form onSubmit={handleNextStep} className="space-y-6">
-                {/* STEP 1: Contact Information */}
-                {currentStep === 1 && (
-                  <div className="space-y-5 animate-in fade-in duration-300">
-                    <div className="pb-3 border-b border-slate-100">
-                      <h2 className="text-xl font-black text-slate-900">
-                        01 Information
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-1">
-                        We will send order updates and WhatsApp tracking link here.
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs font-bold text-slate-800 block mb-1">
-                          Full Name *
-                        </label>
-                        <input
-                          type="text"
-                          name="fullName"
-                          required
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                          placeholder="e.g. Rahul Sharma"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-xs font-bold text-slate-800 block mb-1">
-                            Email Address *
-                          </label>
-                          <input
-                            type="email"
-                            name="email"
-                            required
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                            placeholder="e.g. rahul@example.com"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold text-slate-800 block mb-1">
-                            Mobile Number (India +91) *
-                          </label>
-                          <div className="flex">
-                            <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm font-semibold">
-                              +91
-                            </span>
-                            <input
-                              type="tel"
-                              name="phone"
-                              required
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3 rounded-r-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                              placeholder="98765 43210"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
-                      <button
-                        type="submit"
-                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md shadow-orange-500/20 group"
-                      >
-                        <span>Continue to Delivery</span>
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </button>
-                    </div>
+        {/* 2-Column Checkout Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Form Column */}
+          <div className="lg:col-span-7 space-y-6">
+            <form onSubmit={handleSubmitOrder} className="space-y-6">
+              {/* SECTION 1: BASIC INFORMATION */}
+              <div className="bg-[#EAE4D9]/80 rounded-3xl border border-[#E0D9CD] p-6 sm:p-7 shadow-xs">
+                <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-[#DED7CA]">
+                  <div className="w-8 h-8 rounded-xl bg-[#23201C] text-[#F5EFE6] flex items-center justify-center">
+                    <User className="w-4 h-4" />
                   </div>
-                )}
-
-                {/* STEP 2: Shipping Address & Delivery Method */}
-                {currentStep === 2 && (
-                  <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-black text-slate-900">
-                          02 Delivery Address
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Where should we dispatch your order?
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(1)}
-                        className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1"
-                      >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        <span>Edit Info</span>
-                      </button>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs font-bold text-slate-800 block mb-1">
-                          Street Address, Flat / House No. *
-                        </label>
-                        <input
-                          type="text"
-                          name="address"
-                          required
-                          value={formData.address}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                          placeholder="e.g. Near Main Market, Basharatpur"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold text-slate-800 block mb-1">
-                          Landmark (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          name="landmark"
-                          value={formData.landmark}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                          placeholder="e.g. Opposite Central Park"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <label className="text-xs font-bold text-slate-800 block mb-1">
-                            City *
-                          </label>
-                          <input
-                            type="text"
-                            name="city"
-                            required
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                            placeholder="Gorakhpur"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold text-slate-800 block mb-1">
-                            State *
-                          </label>
-                          <input
-                            type="text"
-                            name="state"
-                            required
-                            value={formData.state}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                            placeholder="Uttar Pradesh"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold text-slate-800 block mb-1">
-                            PIN Code *
-                          </label>
-                          <input
-                            type="text"
-                            name="pincode"
-                            required
-                            value={formData.pincode}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:border-orange-500 focus:outline-hidden"
-                            placeholder="273004"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Delivery Method Selection */}
-                    <div className="pt-4 border-t border-slate-100">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-3">
-                        Select Delivery Speed:
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label
-                          className={`p-4 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
-                            formData.shippingMethod === 'standard'
-                              ? 'border-orange-500 bg-orange-50/40 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="shippingMethod"
-                            value="standard"
-                            checked={formData.shippingMethod === 'standard'}
-                            onChange={handleInputChange}
-                            className="mt-1 text-orange-600"
-                          />
-                          <div>
-                            <div className="flex items-center gap-1.5 font-bold text-slate-900 text-sm">
-                              <Truck className="w-4 h-4 text-orange-500" />
-                              <span>Standard Delivery</span>
-                            </div>
-                            <span className="text-xs text-slate-500 block mt-0.5">2-3 Business Days</span>
-                            <span className="text-xs font-bold text-emerald-700 block mt-1">FREE</span>
-                          </div>
-                        </label>
-
-                        <label
-                          className={`p-4 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
-                            formData.shippingMethod === 'express'
-                              ? 'border-orange-500 bg-orange-50/40 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="shippingMethod"
-                            value="express"
-                            checked={formData.shippingMethod === 'express'}
-                            onChange={handleInputChange}
-                            className="mt-1 text-orange-600"
-                          />
-                          <div>
-                            <div className="flex items-center gap-1.5 font-bold text-slate-900 text-sm">
-                              <span className="text-orange-500 font-black">⚡</span>
-                              <span>Priority Express</span>
-                            </div>
-                            <span className="text-xs text-slate-500 block mt-0.5">Next-Day Delivery</span>
-                            <span className="text-xs font-bold text-slate-900 block mt-1">₹149</span>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(1)}
-                        className="text-xs font-bold text-slate-600 hover:text-slate-900"
-                      >
-                        ← Back to Information
-                      </button>
-                      <button
-                        type="submit"
-                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md shadow-orange-500/20 group"
-                      >
-                        <span>Continue to Payment</span>
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </button>
-                    </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-[#23201C]">
+                      Basic Information
+                    </h2>
+                    <p className="text-[11px] text-[#6E685F]">
+                      Your contact details for order confirmation
+                    </p>
                   </div>
-                )}
+                </div>
 
-                {/* STEP 3: Payment Method (UPI, Credit/Debit Card, Cash on Delivery) */}
-                {currentStep === 3 && (
-                  <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-black text-slate-900">
-                          03 Payment
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-1">
-                          All transactions are encrypted with 256-bit security.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(2)}
-                        className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1"
-                      >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        <span>Edit Address</span>
-                      </button>
-                    </div>
-
-                    {/* Payment Options */}
-                    <div className="space-y-3">
-                      {/* UPI Option */}
-                      <div
-                        className={`p-4 rounded-2xl border transition-all ${
-                          formData.paymentMethod === 'upi'
-                            ? 'border-orange-500 bg-orange-50/20 shadow-xs'
-                            : 'border-slate-200'
-                        }`}
-                      >
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="upi"
-                            checked={formData.paymentMethod === 'upi'}
-                            onChange={handleInputChange}
-                            className="text-orange-500"
-                          />
-                          <div className="flex-1 flex items-center justify-between">
-                            <span className="font-bold text-sm text-slate-900">
-                              UPI (Google Pay / PhonePe / Paytm / BHIM)
-                            </span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                              Instant
-                            </span>
-                          </div>
-                        </label>
-
-                        {formData.paymentMethod === 'upi' && (
-                          <div className="mt-4 pt-4 border-t border-slate-200/60 pl-6 space-y-3">
-                            <label className="text-xs font-bold text-slate-700 block">
-                              Enter your UPI ID / VPA:
-                            </label>
-                            <input
-                              type="text"
-                              name="upiId"
-                              value={formData.upiId}
-                              onChange={handleInputChange}
-                              className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
-                              placeholder="mobile@upi"
-                            />
-                            <p className="text-[11px] text-slate-500">
-                              You will receive a collect request on your UPI app to complete payment.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Credit/Debit Card Option */}
-                      <div
-                        className={`p-4 rounded-2xl border transition-all ${
-                          formData.paymentMethod === 'card'
-                            ? 'border-orange-500 bg-orange-50/20 shadow-xs'
-                            : 'border-slate-200'
-                        }`}
-                      >
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="card"
-                            checked={formData.paymentMethod === 'card'}
-                            onChange={handleInputChange}
-                            className="text-orange-500"
-                          />
-                          <div className="flex-1 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <CreditCard className="w-4 h-4 text-slate-600" />
-                              <span className="font-bold text-sm text-slate-900">
-                                Credit / Debit Card
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-slate-400">Visa, MasterCard, RuPay</span>
-                          </div>
-                        </label>
-
-                        {formData.paymentMethod === 'card' && (
-                          <div className="mt-4 pt-4 border-t border-slate-200/60 pl-6 space-y-3">
-                            <div>
-                              <label className="text-xs font-bold text-slate-700 block mb-1">
-                                Card Number
-                              </label>
-                              <input
-                                type="text"
-                                name="cardNumber"
-                                value={formData.cardNumber}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="text-xs font-bold text-slate-700 block mb-1">
-                                  Valid Thru (MM/YY)
-                                </label>
-                                <input
-                                  type="text"
-                                  name="cardExpiry"
-                                  value={formData.cardExpiry}
-                                  onChange={handleInputChange}
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs font-bold text-slate-700 block mb-1">
-                                  CVV
-                                </label>
-                                <input
-                                  type="password"
-                                  name="cardCvv"
-                                  value={formData.cardCvv}
-                                  onChange={handleInputChange}
-                                  maxLength={4}
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Cash on Delivery Option */}
-                      <div
-                        className={`p-4 rounded-2xl border transition-all ${
-                          formData.paymentMethod === 'cod'
-                            ? 'border-orange-500 bg-orange-50/20 shadow-xs'
-                            : 'border-slate-200'
-                        }`}
-                      >
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="cod"
-                            checked={formData.paymentMethod === 'cod'}
-                            onChange={handleInputChange}
-                            className="text-orange-500"
-                          />
-                          <div className="flex-1 flex items-center justify-between">
-                            <span className="font-bold text-sm text-slate-900">
-                              Cash on Delivery (COD)
-                            </span>
-                            <span className="text-[10px] text-slate-500">Pay cash upon delivery</span>
-                          </div>
-                        </label>
-
-                        {formData.paymentMethod === 'cod' && (
-                          <div className="mt-3 pt-3 border-t border-slate-200/60 pl-6 text-xs text-slate-500">
-                            A verification code will be sent to <strong>+91 {formData.phone}</strong> when our courier partner arrives in Gorakhpur.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Final CTA: PLACE ORDER */}
-                    <div className="pt-4 flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(2)}
-                        className="text-xs font-bold text-slate-600 hover:text-slate-900"
-                      >
-                        ← Back to Shipping
-                      </button>
-                      <button
-                        type="submit"
-                        className="inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-sm shadow-xl shadow-orange-500/30 hover:-translate-y-0.5 transition-all"
-                      >
-                        <Lock className="w-4 h-4" />
-                        <span>PLACE ORDER ({formatINR(finalTotal)})</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </form>
-            </div>
-
-            {/* Sidebar Order Summary */}
-            <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-sm space-y-5 sticky top-28">
-              <h3 className="font-extrabold text-base text-slate-900 border-b border-slate-100 pb-3">
-                Order Items ({cart.length})
-              </h3>
-
-              <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto pr-1 space-y-2">
-                {cart.map((item, idx) => (
-                  <div key={idx} className="flex gap-3 pt-2.5 first:pt-0">
-                    <div className="relative w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 p-1 shrink-0">
-                      <Image
-                        src={item.product.image}
-                        alt={item.product.name}
-                        fill
-                        className="object-contain p-0.5"
+                <div className="space-y-4">
+                  {/* Full Name */}
+                  <div>
+                    <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                      Full Name <span className="text-rose-600">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-[#8E867C] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        name="fullName"
+                        required
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                        placeholder="e.g. Rahul Sharma"
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 truncate">
-                        {item.product.name}
-                      </h4>
-                      <span className="text-[11px] text-slate-500 block">
-                        Qty: {item.quantity} {item.selectedStorage ? `• ${item.selectedStorage}` : ''}
-                      </span>
-                      <span className="text-xs font-black text-slate-900 block mt-0.5">
-                        {formatINR(item.product.price * item.quantity)}
-                      </span>
+                  </div>
+
+                  {/* Phone & Email */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                        Mobile / WhatsApp Number <span className="text-rose-600">*</span>
+                      </label>
+                      <div className="flex">
+                        <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-[#DED7CA] bg-[#EAE4D9] text-[#6E685F] text-xs font-bold">
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          name="phone"
+                          required
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="w-full px-3.5 py-3 rounded-r-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                          placeholder="87269 42338"
+                          maxLength={10}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                        Email Address <span className="text-[#8E867C] text-[11px] font-normal">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-[#8E867C] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                          placeholder="rahul@example.com"
+                        />
+                      </div>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
 
-              {/* Price breakdown */}
-              <div className="space-y-2.5 pt-4 border-t border-slate-100 text-xs">
-                <div className="flex justify-between text-slate-600">
-                  <span>Subtotal</span>
-                  <span className="font-bold text-slate-900">{formatINR(subtotal)}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-semibold">
-                    <span>Discount</span>
-                    <span>-{formatINR(discount)}</span>
+              {/* SECTION 2: DELIVERY ADDRESS */}
+              <div className="bg-[#EAE4D9]/80 rounded-3xl border border-[#E0D9CD] p-6 sm:p-7 shadow-xs">
+                <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-[#DED7CA]">
+                  <div className="w-8 h-8 rounded-xl bg-[#23201C] text-[#F5EFE6] flex items-center justify-center">
+                    <MapPin className="w-4 h-4" />
                   </div>
-                )}
-                <div className="flex justify-between text-slate-600">
-                  <span>Delivery Speed</span>
-                  <span className="font-bold text-slate-900">
-                    {deliveryCharge === 0 ? 'FREE' : formatINR(deliveryCharge)}
-                  </span>
+                  <div>
+                    <h2 className="text-base font-semibold text-[#23201C]">
+                      Delivery Address
+                    </h2>
+                    <p className="text-[11px] text-[#6E685F]">
+                      Where should our Gorakhpur hub dispatch your package?
+                    </p>
+                  </div>
                 </div>
-                <div className="flex justify-between text-base font-black text-slate-950 pt-3 border-t border-slate-200">
-                  <span>Total Amount</span>
-                  <span className="text-orange-500">{formatINR(finalTotal)}</span>
+
+                <div className="space-y-4">
+                  {/* Street Address */}
+                  <div>
+                    <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                      Street Address, Flat / House / Shop No. <span className="text-rose-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="address"
+                      required
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                      placeholder="e.g. Near Main Market, Basharatpur"
+                    />
+                  </div>
+
+                  {/* Landmark */}
+                  <div>
+                    <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                      Landmark / Colony <span className="text-[#8E867C] text-[11px] font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="landmark"
+                      value={formData.landmark}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                      placeholder="e.g. Opposite Central Park, Near Petrol Pump"
+                    />
+                  </div>
+
+                  {/* City, State, PIN */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                        City <span className="text-rose-600">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        required
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                        placeholder="Gorakhpur"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                        State <span className="text-rose-600">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="state"
+                        required
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                        placeholder="Uttar Pradesh"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                        PIN Code <span className="text-rose-600">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="pincode"
+                        required
+                        maxLength={6}
+                        value={formData.pincode}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors"
+                        placeholder="273004"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Customer Note */}
+                  <div>
+                    <label className="text-xs font-semibold text-[#23201C] block mb-1">
+                      Order Instructions / Notes <span className="text-[#8E867C] text-[11px] font-normal">(Optional)</span>
+                    </label>
+                    <textarea
+                      name="customerNote"
+                      rows={2}
+                      value={formData.customerNote}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#DED7CA] bg-[#F4F0E8] text-[#23201C] text-sm focus:border-[#23201C] focus:outline-hidden transition-colors resize-none"
+                      placeholder="e.g. Deliver in the evening, call before arrival"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-center gap-2 text-[11px] text-slate-400">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Gorakhpur Hub Dispatch • 100% Brand Seal</span>
+              {/* WHATSAPP REDIRECT CTA BUTTON */}
+              <div className="bg-[#EAE4D9]/80 rounded-3xl border border-[#E0D9CD] p-6 shadow-xs space-y-4">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 px-6 rounded-2xl bg-[#2E6B47] hover:bg-[#255739] disabled:opacity-50 text-[#F5EFE6] font-bold text-sm sm:text-base flex items-center justify-center gap-3 transition-all shadow-md active:scale-98 cursor-pointer group"
+                >
+                  <MessageCircle className="w-5 h-5 transition-transform group-hover:scale-110" />
+                  <span>
+                    {isSubmitting
+                      ? 'Creating WhatsApp Order...'
+                      : `CONFIRM & ORDER ON WHATSAPP (${formatINR(total)})`}
+                  </span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </button>
+
+                <p className="text-center text-[11px] text-[#6E685F]">
+                  Clicking will generate your order reference and immediately open WhatsApp chat with our store team for dispatch confirmation.
+                </p>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Sticky Sidebar: Order Summary */}
+          <div className="lg:col-span-5 bg-[#EAE4D9]/80 rounded-3xl border border-[#E0D9CD] p-6 sm:p-7 shadow-xs space-y-5 sticky top-28">
+            <div className="flex items-center justify-between border-b border-[#DED7CA] pb-3">
+              <h3 className="font-semibold text-base text-[#23201C]">
+                Order Items ({cart.length})
+              </h3>
+              <Link href="/shop" className="text-xs text-[#564F46] font-semibold hover:underline">
+                + Add More
+              </Link>
+            </div>
+
+            {/* Items List */}
+            <div className="divide-y divide-[#DED7CA] max-h-80 overflow-y-auto pr-1 space-y-2">
+              {cart.map((item, idx) => (
+                <div key={idx} className="flex gap-3 pt-3 first:pt-0">
+                  <div className="relative w-14 h-14 rounded-xl bg-[#F4F0E8] border border-[#DED7CA] p-1 shrink-0">
+                    <Image
+                      src={item.product.image}
+                      alt={item.product.name}
+                      fill
+                      className="object-contain p-0.5"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-[#23201C] truncate">
+                      {item.product.name}
+                    </h4>
+                    <span className="text-[11px] text-[#6E685F] block">
+                      Qty: {item.quantity}{' '}
+                      {item.selectedStorage ? `• ${item.selectedStorage}` : ''}
+                    </span>
+                    <span className="text-xs font-semibold text-[#23201C] block mt-0.5">
+                      {formatINR(item.product.price * item.quantity)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Price Calculations */}
+            <div className="space-y-2.5 pt-4 border-t border-[#DED7CA] text-xs">
+              <div className="flex justify-between text-[#6E685F]">
+                <span>Items Subtotal</span>
+                <span className="font-semibold text-[#23201C]">{formatINR(subtotal)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-[#2E6B47] font-semibold">
+                  <span>Discount</span>
+                  <span>-{formatINR(discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-[#6E685F]">
+                <div className="flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-[#2E6B47]" />
+                  <span>Gorakhpur Dispatch</span>
+                </div>
+                <span className="font-bold text-[#2E6B47]">FREE</span>
+              </div>
+              <div className="flex justify-between text-base font-medium text-[#23201C] pt-3 border-t border-[#DED7CA]">
+                <span>Total Amount</span>
+                <span className="text-[#23201C] font-bold">{formatINR(total)}</span>
+              </div>
+            </div>
+
+            {/* Trust Badges */}
+            <div className="pt-2 border-t border-[#DED7CA] space-y-2">
+              <div className="flex items-center gap-2 text-[11px] text-[#6E685F]">
+                <ShieldCheck className="w-4 h-4 text-[#2E6B47] shrink-0" />
+                <span>100% Brand Seal &amp; Original Packaging</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-[#6E685F]">
+                <MessageCircle className="w-4 h-4 text-[#2E6B47] shrink-0" />
+                <span>Instant Human Support on WhatsApp (+91 87269 42338)</span>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

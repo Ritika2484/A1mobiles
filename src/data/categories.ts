@@ -7,7 +7,6 @@ export const categories: Category[] = [
     name: 'Smartphones',
     description: 'Latest flagship & budget 5G smartphones',
     image: '/images/hero-phone.jpg',
-    itemCount: 42
   },
   {
     id: 'cat-2',
@@ -15,7 +14,6 @@ export const categories: Category[] = [
     name: 'Accessories',
     description: 'Chargers, power banks, cables & mounts',
     image: '/images/accessories.jpg',
-    itemCount: 65
   },
   {
     id: 'cat-3',
@@ -23,7 +21,6 @@ export const categories: Category[] = [
     name: 'Smartwatches',
     description: 'Fitness tracking & cellular smartwatches',
     image: '/images/smartwatch.jpg',
-    itemCount: 19
   },
   {
     id: 'cat-4',
@@ -31,7 +28,6 @@ export const categories: Category[] = [
     name: 'Earbuds',
     description: 'High-fidelity audio & noise cancelling',
     image: '/images/earbuds.jpg',
-    itemCount: 28
   },
   {
     id: 'cat-5',
@@ -39,7 +35,6 @@ export const categories: Category[] = [
     name: 'Tablets',
     description: 'OLED productivity & entertainment tablets',
     image: '/images/tablet.jpg',
-    itemCount: 14
   },
   {
     id: 'cat-6',
@@ -47,6 +42,7 @@ export const categories: Category[] = [
     name: 'Mobile Covers',
     description: 'Armor cases, leather & magnetic cases',
     image: '/images/mobile-covers.jpg',
-    itemCount: 52
   }
 ];
+
+export const CATEGORIES = categories;

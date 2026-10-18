@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, X, ArrowRight, TrendingUp, Clock, Star } from 'lucide-react';
-import { products } from '@/data/products';
 import { categories } from '@/data/categories';
 import { Product } from '@/types';
 import { formatINR } from '@/lib/utils';
@@ -15,20 +14,64 @@ interface SearchModalProps {
 }
 
 const POPULAR_SEARCHES = [
-  'iPhone 17 Pro Max',
-  'Samsung Galaxy S26 Ultra',
-  'Google Pixel 10 Pro',
-  'OnePlus 13',
-  'Xiaomi 15 Ultra',
-  'Nothing Phone 3',
-  'Spigen Armor Case'
+  'Smartphones',
+  '5G Flagship',
+  'Accessories',
+  'Gorakhpur',
+  'Exchange Offer'
 ];
+
+function mapDbToProduct(p: any): Product {
+  const img = p.imageUrl || '/images/hero-phone.jpg';
+  return {
+    id: p.id,
+    slug: p.slug,
+    brand: p.brand,
+    name: p.name,
+    category: p.category || 'smartphones',
+    price: p.price,
+    originalPrice: p.originalPrice || p.price,
+    discount: p.discount || 0,
+    rating: 4.8,
+    reviewsCount: 16,
+    image: img,
+    images: [img],
+    colors: [{ name: 'Default', hex: '#1e293b' }],
+    description: p.description,
+    specifications: {},
+    features: [],
+    whatsInTheBox: ['Device', 'Charging Cable', 'Manual'],
+    featured: p.featured,
+    inStock: p.inStock,
+    tag: p.tag || undefined,
+  };
+}
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch live products from DB
+  useEffect(() => {
+    if (!isOpen) return;
+    async function fetchSearchProducts() {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.products && Array.isArray(data.products)) {
+            setDbProducts(data.products.map(mapDbToProduct));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching products for search:', err);
+      }
+    }
+    fetchSearchProducts();
+  }, [isOpen]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -37,7 +80,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       if (saved) {
         setRecentSearches(JSON.parse(saved));
       } else {
-        setRecentSearches(['iPhone 17 Pro Max', 'Samsung S26', 'Gorakhpur']);
+        setRecentSearches(['Smartphones', 'Gorakhpur']);
       }
     } catch {
       // ignore
@@ -100,7 +143,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   };
 
   const matchingProducts: Product[] = debouncedQuery
-    ? products.filter((p) => {
+    ? dbProducts.filter((p) => {
         const q = debouncedQuery.toLowerCase();
         return (
           p.name.toLowerCase().includes(q) ||
@@ -123,12 +166,12 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+        className="w-full max-w-3xl bg-[#F5EFE6] rounded-2xl shadow-2xl border border-[#E0D9CD] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="relative flex items-center px-5 py-4 border-b border-slate-200 bg-slate-50/70">
-          <Search className="w-5 h-5 text-orange-500 shrink-0 mr-3" />
+        <div className="relative flex items-center px-5 py-4 border-b border-[#E0D9CD] bg-[#EAE4D9]">
+          <Search className="w-5 h-5 text-[#23201C] shrink-0 mr-3" />
           <input
             ref={inputRef}
             type="text"
@@ -140,12 +183,12 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               }
             }}
             placeholder="Search for smartphones, accessories & more"
-            className="w-full bg-transparent text-slate-900 placeholder-slate-400 font-medium text-base sm:text-lg focus:outline-hidden"
+            className="w-full bg-transparent text-[#23201C] placeholder-[#8E867C] font-medium text-base sm:text-lg focus:outline-hidden"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 mr-2"
+              className="p-1 rounded-full text-[#6E685F] hover:text-[#23201C] hover:bg-[#DED7CA] mr-2"
               aria-label="Clear input"
             >
               <X className="w-4 h-4" />
@@ -153,10 +196,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
           )}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/80 transition-colors"
+            className="p-1.5 rounded-lg text-[#6E685F] hover:text-[#23201C] transition-colors"
             aria-label="Close search"
           >
-            <span className="text-xs font-semibold px-1.5 py-0.5 rounded border border-slate-300 bg-white">ESC</span>
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded border border-[#DED7CA] bg-[#F5EFE6]">ESC</span>
           </button>
         </div>
 
@@ -167,7 +210,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {matchingProducts.length > 0 ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6E685F]">
                       Matching Products ({matchingProducts.length})
                     </h3>
                     <Link
@@ -176,7 +219,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         saveSearchTerm(debouncedQuery);
                         onClose();
                       }}
-                      className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                      className="text-xs font-semibold text-[#23201C] hover:text-[#564F46] flex items-center gap-1"
                     >
                       <span>View in Shop</span>
                       <ArrowRight className="w-3 h-3" />
@@ -192,9 +235,9 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                           saveSearchTerm(product.name);
                           onClose();
                         }}
-                        className="group flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-orange-400 hover:shadow-md transition-all bg-white"
+                        className="group flex items-center gap-3 p-3 rounded-xl border border-[#E0D9CD] hover:border-[#23201C] transition-all bg-[#EAE4D9]/70"
                       >
-                        <div className="relative w-14 h-14 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                        <div className="relative w-14 h-14 bg-[#F5EFE6] rounded-lg overflow-hidden shrink-0 border border-[#E0D9CD]">
                           <Image
                             src={product.image}
                             alt={product.name}
@@ -203,24 +246,24 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider">
+                          <span className="text-[11px] font-bold text-[#564F46] uppercase tracking-wider">
                             {product.brand}
                           </span>
-                          <h4 className="text-sm font-semibold text-slate-900 truncate group-hover:text-orange-600 transition-colors">
+                          <h4 className="text-sm font-semibold text-[#23201C] truncate group-hover:text-[#564F46] transition-colors">
                             {product.name}
                           </h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-bold text-slate-900">
+                            <span className="text-sm font-bold text-[#23201C]">
                               {formatINR(product.price)}
                             </span>
                             {product.discount > 0 && (
-                              <span className="text-xs line-through text-slate-400">
+                              <span className="text-xs line-through text-[#8E867C]">
                                 {formatINR(product.originalPrice)}
                               </span>
                             )}
-                            <div className="flex items-center gap-0.5 text-xs text-amber-500 ml-auto">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                              <span className="font-medium text-slate-700">{product.rating}</span>
+                            <div className="flex items-center gap-0.5 text-xs text-amber-600 ml-auto">
+                              <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                              <span className="font-medium text-[#23201C]">{product.rating}</span>
                             </div>
                           </div>
                         </div>
@@ -229,8 +272,8 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   </div>
 
                   {matchingCategories.length > 0 && (
-                    <div className="pt-4 border-t border-slate-100">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                    <div className="pt-4 border-t border-[#E0D9CD]">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6E685F] mb-2">
                         Categories
                       </h3>
                       <div className="flex flex-wrap gap-2">
@@ -239,7 +282,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             key={cat.id}
                             href={`/shop?category=${cat.slug}`}
                             onClick={onClose}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 text-xs font-medium hover:bg-orange-100 transition-colors"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#EAE4D9] border border-[#E0D9CD] text-[#23201C] text-xs font-medium hover:bg-[#DED7CA] transition-colors"
                           >
                             <span>{cat.name}</span>
                             <ArrowRight className="w-3 h-3" />
@@ -251,11 +294,11 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                  <div className="w-12 h-12 rounded-full bg-[#EAE4D9] flex items-center justify-center mx-auto mb-3 text-[#6E685F]">
                     <Search className="w-6 h-6" />
                   </div>
-                  <h4 className="text-base font-semibold text-slate-900">No products found</h4>
-                  <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                  <h4 className="text-base font-semibold text-[#23201C]">No products found</h4>
+                  <p className="text-sm text-[#6E685F] mt-1 max-w-sm mx-auto">
                     We could not find any products matching &quot;{debouncedQuery}&quot;. Try checking for typos or searching a broader term.
                   </p>
                 </div>
@@ -267,13 +310,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#6E685F]">
+                      <Clock className="w-3.5 h-3.5 text-[#6E685F]" />
                       <span>Recent Searches</span>
                     </div>
                     <button
                       onClick={clearRecentSearches}
-                      className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                      className="text-xs text-[#6E685F] hover:text-[#23201C] transition-colors"
                     >
                       Clear all
                     </button>
@@ -283,7 +326,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       <button
                         key={i}
                         onClick={() => handleSelectSearch(term)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-orange-50 hover:text-orange-600 text-xs font-medium transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EAE4D9] text-[#23201C] hover:bg-[#DED7CA] text-xs font-medium transition-colors"
                       >
                         <span>{term}</span>
                       </button>
@@ -294,8 +337,8 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
               {/* Popular Searches */}
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#6E685F] mb-2.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-[#564F46]" />
                   <span>Popular Trending Searches</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -303,7 +346,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     <button
                       key={i}
                       onClick={() => handleSelectSearch(term)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:border-orange-500 hover:text-orange-600 text-xs font-medium transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E0D9CD] bg-[#F5EFE6] text-[#23201C] hover:border-[#23201C] text-xs font-medium transition-all"
                     >
                       <span>{term}</span>
                     </button>
@@ -313,7 +356,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
               {/* Quick Categories */}
               <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2.5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6E685F] mb-2.5">
                   Browse by Category
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
@@ -322,13 +365,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       key={cat.id}
                       href={`/shop?category=${cat.slug}`}
                       onClick={onClose}
-                      className="flex flex-col items-center text-center p-3 rounded-xl border border-slate-200 hover:border-orange-400 hover:bg-orange-50/30 transition-all group"
+                      className="flex flex-col items-center text-center p-3 rounded-xl border border-[#E0D9CD] bg-[#EAE4D9]/60 hover:border-[#23201C] transition-all group"
                     >
-                      <span className="text-xs font-semibold text-slate-900 group-hover:text-orange-600">
+                      <span className="text-xs font-semibold text-[#23201C] group-hover:text-[#564F46]">
                         {cat.name}
-                      </span>
-                      <span className="text-[11px] text-slate-400 mt-0.5">
-                        {cat.itemCount}+ items
                       </span>
                     </Link>
                   ))}

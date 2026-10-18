@@ -30,7 +30,7 @@ export interface Category {
   name: string;
   description: string;
   image: string;
-  itemCount: number;
+  itemCount?: number;
 }
 
 export interface Brand {

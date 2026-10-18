@@ -6,10 +6,7 @@ import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { SellDeviceHero } from '@/components/home/SellDeviceHero';
 import { SellDeviceSteps } from '@/components/home/SellDeviceSteps';
 import { SellDeviceCategories } from '@/components/home/SellDeviceCategories';
-import { DeviceValuationTool } from '@/components/home/DeviceValuationTool';
-import { TradeInBanner } from '@/components/home/TradeInBanner';
 import { BestDeals } from '@/components/home/BestDeals';
-import { BrandsSection } from '@/components/home/BrandsSection';
 import { WhyChooseUs } from '@/components/home/WhyChooseUs';
 import { BuyProcess } from '@/components/home/BuyProcess';
 import { PromoBannerWide } from '@/components/home/PromoBannerWide';
@@ -41,17 +38,8 @@ export default function HomePage() {
       {/* Device Categories for Selling */}
       <SellDeviceCategories />
 
-      {/* 10. Device Valuation / Check Price */}
-      <DeviceValuationTool />
-
-      {/* 11. Trade-In / Exchange */}
-      <TradeInBanner />
-
       {/* 12. Best Deals */}
       <BestDeals />
-
-      {/* 13. Shop by Brand */}
-      <BrandsSection />
 
       {/* 14. Why Choose A1 */}
       <WhyChooseUs />

@@ -15,17 +15,17 @@ export function SellDeviceCategories() {
   };
 
   return (
-    <section className="py-14 sm:py-18 bg-slate-50/70 border-b border-slate-100">
+    <section className="py-14 sm:py-18 bg-[#F5EFE6] border-b border-[#E0D9CD]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-          <span className="text-xs font-bold uppercase tracking-wider text-orange-600 block mb-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#564F46] block mb-1">
             Choose Category
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#23201C] tracking-tight">
             What Device Do You Want to Sell?
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1.5">
+          <p className="text-xs sm:text-sm text-[#6E685F] mt-1.5">
             Select your device type to check instant resale value with free doorstep collection.
           </p>
         </div>
@@ -38,11 +38,11 @@ export function SellDeviceCategories() {
               <Link
                 key={item.id}
                 href={`/sell-device?category=${item.type}`}
-                className="group bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-[#EAE4D9]/80 rounded-2xl border border-[#E0D9CD] p-5 flex flex-col justify-between hover:border-[#23201C] hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <div>
                   {/* Image container */}
-                  <div className="relative w-full aspect-square bg-slate-50 rounded-xl overflow-hidden mb-4 border border-slate-100 flex items-center justify-center">
+                  <div className="relative w-full aspect-square bg-[#F5EFE6] rounded-xl overflow-hidden mb-4 border border-[#E0D9CD] flex items-center justify-center">
                     <Image
                       src={item.image}
                       alt={item.title}
@@ -50,29 +50,29 @@ export function SellDeviceCategories() {
                       sizes="(max-width: 640px) 100vw, 25vw"
                       className="object-contain p-4 group-hover:scale-106 transition-transform duration-500 ease-out"
                     />
-                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold">
+                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#564F46] text-[#F5EFE6] text-[10px] font-bold">
                       {item.tag}
                     </div>
                   </div>
 
                   {/* Header with Icon and Title */}
                   <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-[#F5EFE6] flex items-center justify-center text-[#23201C] group-hover:bg-[#23201C] group-hover:text-[#F5EFE6] transition-colors">
                       <Icon className="w-4 h-4" />
                     </div>
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                    <h3 className="text-base font-bold text-[#23201C] group-hover:text-[#564F46] transition-colors">
                       {item.title}
                     </h3>
                   </div>
 
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-xs text-[#6E685F] leading-relaxed">
                     {item.description}
                   </p>
                 </div>
 
                 {/* Footer with Rate & Quote CTA */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-orange-600 group-hover:text-orange-700">
-                  <span className="text-[11px] text-slate-400 font-medium">
+                <div className="mt-4 pt-3 border-t border-[#E0D9CD] flex items-center justify-between text-xs font-bold text-[#23201C] group-hover:text-[#564F46]">
+                  <span className="text-[11px] text-[#78726A] font-medium">
                     {item.quoteRate}
                   </span>
                   <div className="flex items-center gap-1">

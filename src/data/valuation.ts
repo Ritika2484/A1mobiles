@@ -24,10 +24,10 @@ export const SELL_DEVICE_CATEGORIES = [
     id: 'phone',
     type: 'phone' as DeviceType,
     title: 'Sell Phone',
-    description: 'Instant quote for all major Android & Apple smartphones',
+    description: 'Fair valuation for all major Android & Apple smartphones',
     image: '/images/hero-phone.jpg',
     tag: 'Highest Value',
-    quoteRate: 'Up to ₹95,000'
+    quoteRate: 'Best Market Valuation'
   },
   {
     id: 'laptop',
@@ -36,7 +36,7 @@ export const SELL_DEVICE_CATEGORIES = [
     description: 'MacBook, Dell, HP, Lenovo & Gaming laptops accepted',
     image: '/images/laptop.jpg',
     tag: 'Free Doorstep Inspection',
-    quoteRate: 'Up to ₹85,000'
+    quoteRate: 'Free Inspection'
   },
   {
     id: 'tablet',
@@ -45,7 +45,7 @@ export const SELL_DEVICE_CATEGORIES = [
     description: 'iPad Pro, Air, Mini, Samsung Galaxy Tab & Lenovo tabs',
     image: '/images/tablet.jpg',
     tag: 'Same Day UPI',
-    quoteRate: 'Up to ₹55,000'
+    quoteRate: 'Same Day UPI Payout'
   },
   {
     id: 'smartwatch',
@@ -54,7 +54,7 @@ export const SELL_DEVICE_CATEGORIES = [
     description: 'Apple Watch Series & Ultra, Galaxy Watch & Garmin',
     image: '/images/smartwatch.jpg',
     tag: 'Instant Cash',
-    quoteRate: 'Up to ₹35,000'
+    quoteRate: 'Spot Payout'
   }
 ];
 
