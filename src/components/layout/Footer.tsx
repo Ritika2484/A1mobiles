@@ -26,6 +26,7 @@ export function Footer() {
                   src="/images/logo.png"
                   alt="A1 Mobile Shop Logo"
                   fill
+                  sizes="44px"
                   className="object-cover"
                 />
               </div>

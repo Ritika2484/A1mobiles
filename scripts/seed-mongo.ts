@@ -36,7 +36,18 @@ async function main() {
     console.log(`ℹ️ Admin user already exists: ${adminEmail}`);
   }
 
-  console.log('✨ Seed completed successfully (Admin user verified, no sample products seeded).');
+  // 2. Seed / Sync Catalog Products into MongoDB
+  console.log('\n📦 Seeding catalog products into MongoDB...');
+  const { runCatalogImport } = await import('../src/lib/catalogSync');
+  const importSummary = await runCatalogImport();
+  console.log(`\n✨ Seed completed successfully!`);
+  console.log(`   - Admin: ${adminEmail}`);
+  console.log(`   - Total Products Processed: ${importSummary.totalProcessed}`);
+  console.log(`   - New Products Created: ${importSummary.createdCount}`);
+  console.log(`   - Existing Products Updated: ${importSummary.updatedCount}`);
+  if (importSummary.imagesUploaded > 0) {
+    console.log(`   - Cloudinary Images Uploaded: ${importSummary.imagesUploaded}`);
+  }
   await mongoose.disconnect();
 }
 

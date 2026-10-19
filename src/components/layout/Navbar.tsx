@@ -76,6 +76,7 @@ export function Navbar() {
                     src="/images/logo.png"
                     alt="A1 Mobile Shop Logo"
                     fill
+                    sizes="(max-width: 640px) 44px, 48px"
                     className="object-cover"
                     priority
                   />
@@ -322,7 +323,7 @@ export function Navbar() {
             <div className="p-4 border-b border-[#E0D9CD] flex items-center justify-between bg-[#EAE4D9]">
               <div className="flex items-center gap-2">
                 <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#DED7CA] shrink-0">
-                  <Image src="/images/logo.png" alt="Logo" fill className="object-cover" />
+                  <Image src="/images/logo.png" alt="Logo" fill sizes="36px" className="object-cover" />
                 </div>
                 <span className="font-extrabold text-sm text-[#23201C]">A1 MOBILE SHOP</span>
               </div>

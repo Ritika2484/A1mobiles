@@ -9,5 +9,7 @@ export const brands: Brand[] = [
   { id: 'brand-nothing', name: 'Nothing', tagline: 'Pure Tech', origin: 'UK', popularModels: 'Phone (3), Ear (3), CMF' },
   { id: 'brand-realme', name: 'Realme', tagline: 'Dare to Leap', origin: 'Global', popularModels: 'GT 7 Pro, Number Series' },
   { id: 'brand-vivo', name: 'Vivo', tagline: 'Delight Every Moment', origin: 'Global', popularModels: 'X200 Pro, V40 Pro' },
-  { id: 'brand-oppo', name: 'Oppo', tagline: 'Inspiration Ahead', origin: 'Global', popularModels: 'Find X8 Pro, Reno 13' },
+  { id: 'brand-lava', name: 'Lava', tagline: 'Proudly Indian', origin: 'India', popularModels: 'Agni Series, Blaze, Smart' },
+  { id: 'brand-anker', name: 'Anker', tagline: 'Charge Fast, Live More', origin: 'Global', popularModels: 'PowerCore, GaN Prime Chargers' },
+  { id: 'brand-spigen', name: 'Spigen', tagline: 'Something You Want', origin: 'USA/Korea', popularModels: 'Rugged Armor, Ultra Hybrid' },
 ];

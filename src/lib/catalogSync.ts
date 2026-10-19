@@ -35,12 +35,18 @@ export async function runCatalogImport(): Promise<ImportResult> {
     importedSlugs: [],
   };
 
-  if (
-    !process.env.CLOUDINARY_CLOUD_NAME ||
-    !process.env.CLOUDINARY_API_KEY ||
-    !process.env.CLOUDINARY_API_SECRET
-  ) {
-    throw new Error('Cloudinary credentials missing in environment variables (.env).');
+  const isCloudinaryConfigured = Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloudinary_cloud_name' &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_KEY !== 'your_cloudinary_api_key' &&
+    process.env.CLOUDINARY_API_SECRET &&
+    process.env.CLOUDINARY_API_SECRET !== 'your_cloudinary_api_secret'
+  );
+
+  if (!isCloudinaryConfigured) {
+    console.log('ℹ️ Cloudinary credentials not configured or using placeholders.');
+    console.log('   Using direct image assets for MongoDB products.\n');
   }
 
   await connectDB();
@@ -53,46 +59,48 @@ export async function runCatalogImport(): Promise<ImportResult> {
     let finalImageUrl: string = phone.imageSourceUrl;
     let finalPublicId: string = phone.cloudinaryPublicId;
 
-    // 1. Check or Upload Image to Cloudinary
-    try {
-      let assetExists = false;
+    // 1. Check or Upload Image to Cloudinary (if configured)
+    if (isCloudinaryConfigured) {
       try {
-        const existingAsset = await cloudinary.api.resource(phone.cloudinaryPublicId);
-        if (existingAsset && existingAsset.secure_url) {
-          assetExists = true;
-          finalImageUrl = existingAsset.secure_url;
-          finalPublicId = existingAsset.public_id;
-          result.imagesReused++;
-          console.log(`   ↳ ♻️ Reusing existing Cloudinary asset: ${finalPublicId}`);
+        let assetExists = false;
+        try {
+          const existingAsset = await cloudinary.api.resource(phone.cloudinaryPublicId);
+          if (existingAsset && existingAsset.secure_url) {
+            assetExists = true;
+            finalImageUrl = existingAsset.secure_url;
+            finalPublicId = existingAsset.public_id;
+            result.imagesReused++;
+            console.log(`   ↳ ♻️ Reusing existing Cloudinary asset: ${finalPublicId}`);
+          }
+        } catch (checkErr: any) {
+          if (checkErr?.error?.http_code !== 404 && checkErr?.http_code !== 404) {
+            // not fatal, proceed
+          }
         }
-      } catch (checkErr: any) {
-        if (checkErr?.error?.http_code !== 404 && checkErr?.http_code !== 404) {
-          // not fatal, proceed
-        }
-      }
 
-      if (!assetExists) {
-        console.log(`   ↳ ⬆️ Uploading to Cloudinary folder: ${phone.cloudinaryFolder}...`);
-        const uploadRes = await cloudinary.uploader.upload(phone.imageSourceUrl, {
-          folder: phone.cloudinaryFolder,
-          public_id: path.basename(phone.cloudinaryPublicId),
-          overwrite: true,
-          transformation: [
-            { width: 1000, height: 1000, crop: 'limit', quality: 'auto:good', fetch_format: 'auto' },
-          ],
+        if (!assetExists) {
+          console.log(`   ↳ ⬆️ Uploading to Cloudinary folder: ${phone.cloudinaryFolder}...`);
+          const uploadRes = await cloudinary.uploader.upload(phone.imageSourceUrl, {
+            folder: phone.cloudinaryFolder,
+            public_id: path.basename(phone.cloudinaryPublicId),
+            overwrite: true,
+            transformation: [
+              { width: 1000, height: 1000, crop: 'limit', quality: 'auto:good', fetch_format: 'auto' },
+            ],
+          });
+
+          finalImageUrl = uploadRes.secure_url;
+          finalPublicId = uploadRes.public_id;
+          result.imagesUploaded++;
+          console.log(`   ↳ ✅ Cloudinary upload complete: ${finalPublicId}`);
+        }
+      } catch (uploadError: any) {
+        console.warn(`   ↳ ⚠️ Cloudinary upload issue: ${uploadError.message || uploadError}`);
+        result.failedUploads.push({
+          model: `${phone.brand} ${phone.model}`,
+          reason: uploadError.message || String(uploadError),
         });
-
-        finalImageUrl = uploadRes.secure_url;
-        finalPublicId = uploadRes.public_id;
-        result.imagesUploaded++;
-        console.log(`   ↳ ✅ Cloudinary upload complete: ${finalPublicId}`);
       }
-    } catch (uploadError: any) {
-      console.warn(`   ↳ ⚠️ Cloudinary upload issue: ${uploadError.message || uploadError}`);
-      result.failedUploads.push({
-        model: `${phone.brand} ${phone.model}`,
-        reason: uploadError.message || String(uploadError),
-      });
     }
 
     // 2. Upsert into MongoDB
